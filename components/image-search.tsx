@@ -5,6 +5,7 @@ import { NoImagesFound } from "./no-images-found";
 import { useSharedTransition } from "@/lib/hooks/use-shared-transition";
 import { CardGridSkeleton } from "./card-grid-skeleton";
 import { useState, useEffect, useRef } from "react";
+import { highlightText } from "@/lib/utils";
 
 export const ImageSearch = ({
   images,
@@ -23,10 +24,10 @@ export const ImageSearch = ({
     return <NoImagesFound query={query ?? ""} />;
   }
 
-  return <ImageGrid images={images} selectedImageId={selectedImageId} />;
+  return <ImageGrid images={images} selectedImageId={selectedImageId} query={query} />;
 };
 
-const ImageGrid = ({ images: initialImages, selectedImageId }: { images: DBImage[]; selectedImageId?: number }) => {
+const ImageGrid = ({ images: initialImages, selectedImageId, query }: { images: DBImage[]; selectedImageId?: number; query?: string }) => {
   const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
   const [images, setImages] = useState<DBImage[]>(initialImages);
   const [isLoading, setIsLoading] = useState(false);
@@ -122,6 +123,7 @@ const ImageGrid = ({ images: initialImages, selectedImageId }: { images: DBImage
               similarity={image.similarity}
               onClick={() => setFullscreenIndex(index)}
               isSelected={selectedImageId === image.id}
+              query={query}
             />
           </div>
         ))}
@@ -185,8 +187,14 @@ const ImageGrid = ({ images: initialImages, selectedImageId }: { images: DBImage
 
           {/* Text below image */}
           <div className="text-center text-white max-w-2xl space-y-1 pointer-events-none">
-            <h3 className="text-xl font-semibold">{displayedImages[fullscreenIndex].title}</h3>
-            <p className="text-sm text-gray-300">{displayedImages[fullscreenIndex].description}</p>
+            <h3
+              className="text-xl font-semibold"
+              dangerouslySetInnerHTML={{ __html: highlightText(displayedImages[fullscreenIndex].title, query) }}
+            />
+            <p
+              className="text-sm text-gray-300"
+              dangerouslySetInnerHTML={{ __html: highlightText(displayedImages[fullscreenIndex].description, query) }}
+            />
             {displayedImages[fullscreenIndex].address && (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayedImages[fullscreenIndex].address)}`}
@@ -194,9 +202,8 @@ const ImageGrid = ({ images: initialImages, selectedImageId }: { images: DBImage
                 rel="noopener noreferrer"
                 className="text-sm text-blue-400 hover:underline pointer-events-auto"
                 onClick={(e) => e.stopPropagation()}
-              >
-                {displayedImages[fullscreenIndex].address}
-              </a>
+                dangerouslySetInnerHTML={{ __html: highlightText(displayedImages[fullscreenIndex].address, query) }}
+              />
             )}
           </div>
         </div>
