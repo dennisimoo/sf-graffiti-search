@@ -38,7 +38,3 @@ next-env.d.ts
 
 /images-to-index
 images-with-metadata.json
-
-# graffiti data (too large for git)
-graffiti-photos.csv
-/data
