@@ -67,15 +67,13 @@ export async function getImages(
       return { images: images.map(toDBImage) };
     }
 
-    // Search by text match across all fields
+    // Search by text match across AI-generated fields and address only
     const lowerQuery = query.toLowerCase();
     const matches = images.filter(
       (img) =>
         img.aiTitle?.toLowerCase().includes(lowerQuery) ||
-        img.address.toLowerCase().includes(lowerQuery) ||
         img.aiAnalysis.toLowerCase().includes(lowerQuery) ||
-        img.originalComment.toLowerCase().includes(lowerQuery) ||
-        img.location.toLowerCase().includes(lowerQuery),
+        img.address.toLowerCase().includes(lowerQuery),
     );
 
     // Mark direct matches with similarity 1
