@@ -57,10 +57,10 @@ export async function getImages(
     if (!cachedImages) {
       console.log("Loading images into memory cache...");
       cachedImages = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
-      console.log(`Cached ${cachedImages.length} images`);
+      console.log(`Cached ${cachedImages!.length} images`);
     }
 
-    const images = cachedImages;
+    const images = cachedImages!;
 
     // If no query, return all images
     if (!query || query.length < 2) {
