@@ -63,13 +63,24 @@ export async function getTotalCount(query?: string): Promise<number> {
     return cachedImages.length;
   }
 
-  const lowerQuery = query.toLowerCase();
-  return cachedImages.filter(
-    (img) =>
-      img.aiTitle?.toLowerCase().includes(lowerQuery) ||
-      img.aiAnalysis.toLowerCase().includes(lowerQuery) ||
-      img.address.toLowerCase().includes(lowerQuery),
-  ).length;
+  const lowerQuery = query.toLowerCase().trim();
+  const isExactPhrase = lowerQuery.startsWith('"') && lowerQuery.endsWith('"');
+  const searchTerm = isExactPhrase ? lowerQuery.slice(1, -1) : lowerQuery;
+  const wordBoundaryRegex = new RegExp(`\\b${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+
+  return cachedImages.filter((img) => {
+    const fields = [
+      img.aiTitle || '',
+      img.aiAnalysis || '',
+      img.address || '',
+    ].join(' ').toLowerCase();
+
+    if (isExactPhrase) {
+      return fields.includes(searchTerm);
+    }
+
+    return wordBoundaryRegex.test(fields);
+  }).length;
 }
 
 export async function getImages(
@@ -99,13 +110,30 @@ export async function getImages(
     }
 
     // Search by text match across AI-generated fields and address only
-    const lowerQuery = query.toLowerCase();
-    const matches = images.filter(
-      (img) =>
-        img.aiTitle?.toLowerCase().includes(lowerQuery) ||
-        img.aiAnalysis.toLowerCase().includes(lowerQuery) ||
-        img.address.toLowerCase().includes(lowerQuery),
-    );
+    const lowerQuery = query.toLowerCase().trim();
+
+    // Check if query is in quotes for exact phrase matching
+    const isExactPhrase = lowerQuery.startsWith('"') && lowerQuery.endsWith('"');
+    const searchTerm = isExactPhrase ? lowerQuery.slice(1, -1) : lowerQuery;
+
+    // Create word boundary regex for whole word matching
+    const wordBoundaryRegex = new RegExp(`\\b${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+
+    const matches = images.filter((img) => {
+      const fields = [
+        img.aiTitle || '',
+        img.aiAnalysis || '',
+        img.address || '',
+      ].join(' ').toLowerCase();
+
+      // If exact phrase in quotes, use includes
+      if (isExactPhrase) {
+        return fields.includes(searchTerm);
+      }
+
+      // Otherwise match whole words only
+      return wordBoundaryRegex.test(fields);
+    });
 
     // Mark direct matches with similarity 1 and paginate results
     const matchesWithSimilarity = matches.slice(offset, offset + limit).map(img => ({
