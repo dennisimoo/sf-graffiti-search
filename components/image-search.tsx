@@ -26,9 +26,11 @@ export const ImageSearch = ({
   return <ImageGrid images={images} selectedImageId={selectedImageId} />;
 };
 
-const ImageGrid = ({ images, selectedImageId }: { images: DBImage[]; selectedImageId?: number }) => {
+const ImageGrid = ({ images: initialImages, selectedImageId }: { images: DBImage[]; selectedImageId?: number }) => {
   const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
-  const [displayCount, setDisplayCount] = useState(20);
+  const [images, setImages] = useState<DBImage[]>(initialImages);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -48,12 +50,43 @@ const ImageGrid = ({ images, selectedImageId }: { images: DBImage[]; selectedIma
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [fullscreenIndex, images.length]);
 
+  // Load more images from API
+  const loadMore = async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        offset: images.length.toString(),
+        limit: "100",
+      });
+
+      const query = new URLSearchParams(window.location.search).get("q");
+      if (query) {
+        params.set("q", query);
+      }
+
+      const response = await fetch(`/api/images?${params}`);
+      const data = await response.json();
+
+      if (data.images.length === 0) {
+        setHasMore(false);
+      } else {
+        setImages((prev) => [...prev, ...data.images]);
+      }
+    } catch (error) {
+      console.error("Failed to load more images:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && displayCount < images.length) {
-          setDisplayCount((prev) => Math.min(prev + 20, images.length));
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadMore();
         }
       },
       { threshold: 0.1 }
@@ -69,14 +102,15 @@ const ImageGrid = ({ images, selectedImageId }: { images: DBImage[]; selectedIma
         observer.unobserve(currentRef);
       }
     };
-  }, [displayCount, images.length]);
+  }, [hasMore, isLoading, images.length]);
 
-  // Reset display count when images change
+  // Reset images when initial data changes (new search)
   useEffect(() => {
-    setDisplayCount(20);
-  }, [images]);
+    setImages(initialImages);
+    setHasMore(initialImages.length === 100);
+  }, [initialImages]);
 
-  const displayedImages = images.slice(0, displayCount);
+  const displayedImages = images;
 
   return (
     <>
@@ -94,9 +128,13 @@ const ImageGrid = ({ images, selectedImageId }: { images: DBImage[]; selectedIma
       </div>
 
       {/* Load more trigger */}
-      {displayCount < images.length && (
+      {hasMore && (
         <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
-          <p className="text-sm text-gray-500">Loading more...</p>
+          {isLoading ? (
+            <p className="text-sm text-gray-500">Loading more...</p>
+          ) : (
+            <p className="text-sm text-gray-500">Scroll for more</p>
+          )}
         </div>
       )}
 

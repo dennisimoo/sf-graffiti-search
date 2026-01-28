@@ -4,7 +4,7 @@ import { ErrorComponent } from "./error";
 import { ImageSearch } from "./image-search";
 
 export const SuspendedImageSearch = async ({ query }: { query?: string }) => {
-  const { images, error} = await getImages(query);
+  const { images, error, total } = await getImages(query, 0, 100);
 
   if (error) {
     return <ErrorComponent error={error} />;
@@ -13,7 +13,7 @@ export const SuspendedImageSearch = async ({ query }: { query?: string }) => {
   return (
     <>
       <div className="text-sm text-gray-600 mb-4">
-        {images.length.toLocaleString()} {query ? 'results' : 'graffiti photos'}
+        {(total || images.length).toLocaleString()} {query ? 'results' : 'graffiti photos'}
       </div>
       <ImageSearch images={images} query={query} />
     </>

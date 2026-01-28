@@ -56,9 +56,27 @@ function toDBImage(img: LocalImage): DBImage {
   };
 }
 
+export async function getTotalCount(query?: string): Promise<number> {
+  if (!cachedImages) return 0;
+
+  if (!query || query.length < 2) {
+    return cachedImages.length;
+  }
+
+  const lowerQuery = query.toLowerCase();
+  return cachedImages.filter(
+    (img) =>
+      img.aiTitle?.toLowerCase().includes(lowerQuery) ||
+      img.aiAnalysis.toLowerCase().includes(lowerQuery) ||
+      img.address.toLowerCase().includes(lowerQuery),
+  ).length;
+}
+
 export async function getImages(
   query?: string,
-): Promise<{ images: DBImage[]; error?: Error }> {
+  offset: number = 0,
+  limit: number = 100,
+): Promise<{ images: DBImage[]; error?: Error; total?: number }> {
   try {
     // Use pre-loaded cache
     if (!cachedImages) {
@@ -72,9 +90,12 @@ export async function getImages(
 
     const images = cachedImages;
 
-    // If no query, return all images
+    // If no query, return paginated images
     if (!query || query.length < 2) {
-      return { images: images.map(toDBImage) };
+      return {
+        images: images.slice(offset, offset + limit).map(toDBImage),
+        total: images.length,
+      };
     }
 
     // Search by text match across AI-generated fields and address only
@@ -86,13 +107,16 @@ export async function getImages(
         img.address.toLowerCase().includes(lowerQuery),
     );
 
-    // Mark direct matches with similarity 1
-    const matchesWithSimilarity = matches.map(img => ({
+    // Mark direct matches with similarity 1 and paginate results
+    const matchesWithSimilarity = matches.slice(offset, offset + limit).map(img => ({
       ...img,
       similarity: 1,
     }));
 
-    return { images: matchesWithSimilarity.map(toDBImage) };
+    return {
+      images: matchesWithSimilarity.map(toDBImage),
+      total: matches.length,
+    };
   } catch (e) {
     console.error("Search error:", e);
     return {
