@@ -5,7 +5,6 @@ import { NoImagesFound } from "./no-images-found";
 import { useSharedTransition } from "@/lib/hooks/use-shared-transition";
 import { CardGridSkeleton } from "./card-grid-skeleton";
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 
 export const ImageSearch = ({
   images,
@@ -108,11 +107,9 @@ const ImageGrid = ({ images, selectedImageId }: { images: DBImage[]; selectedIma
           onClick={() => setFullscreenIndex(null)}
         >
           <div className="relative flex-shrink-0">
-            <Image
+            <img
               src={displayedImages[fullscreenIndex].path}
               alt={displayedImages[fullscreenIndex].title}
-              width={1920}
-              height={1080}
               className="max-w-full max-h-[70vh] object-contain"
             />
 

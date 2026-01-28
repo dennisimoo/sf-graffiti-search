@@ -19,6 +19,9 @@ export interface LocalImage {
   longitude?: number;
 }
 
+// In-memory cache - loaded once and reused across requests
+let cachedImages: LocalImage[] | null = null;
+
 // Convert LocalImage to DBImage format
 function toDBImage(img: LocalImage): DBImage {
   return {
@@ -50,7 +53,14 @@ export async function getImages(
       };
     }
 
-    const images: LocalImage[] = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
+    // Load from cache if available, otherwise read and cache
+    if (!cachedImages) {
+      console.log("Loading images into memory cache...");
+      cachedImages = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
+      console.log(`Cached ${cachedImages.length} images`);
+    }
+
+    const images = cachedImages;
 
     // If no query, return all images
     if (!query || query.length < 2) {
