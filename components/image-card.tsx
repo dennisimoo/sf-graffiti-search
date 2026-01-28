@@ -26,6 +26,7 @@ export function ImageCard({
       <img
         src={image.path}
         alt={image.title}
+        loading="lazy"
         className="w-full h-full object-cover transition-transform group-hover:scale-105"
       />
       <div className="absolute inset-0 bg-zinc-900/70 group-hover:opacity-100 opacity-0 transition-opacity flex flex-col items-center justify-center p-6 text-white text-center">

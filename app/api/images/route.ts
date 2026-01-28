@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q") || undefined;
   const offset = parseInt(searchParams.get("offset") || "0");
-  const limit = parseInt(searchParams.get("limit") || "100");
+  const limit = parseInt(searchParams.get("limit") || "20");
 
   const { images, error, total } = await getImages(query, offset, limit);
 

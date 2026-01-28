@@ -58,7 +58,7 @@ const ImageGrid = ({ images: initialImages, selectedImageId }: { images: DBImage
     try {
       const params = new URLSearchParams({
         offset: images.length.toString(),
-        limit: "100",
+        limit: "20",
       });
 
       const query = new URLSearchParams(window.location.search).get("q");
@@ -107,7 +107,7 @@ const ImageGrid = ({ images: initialImages, selectedImageId }: { images: DBImage
   // Reset images when initial data changes (new search)
   useEffect(() => {
     setImages(initialImages);
-    setHasMore(initialImages.length === 100);
+    setHasMore(initialImages.length === 20);
   }, [initialImages]);
 
   const displayedImages = images;
@@ -148,6 +148,7 @@ const ImageGrid = ({ images: initialImages, selectedImageId }: { images: DBImage
             <img
               src={displayedImages[fullscreenIndex].path}
               alt={displayedImages[fullscreenIndex].title}
+              loading="eager"
               className="max-w-full max-h-[70vh] object-contain"
             />
 

@@ -4,7 +4,7 @@ import { ErrorComponent } from "./error";
 import { ImageSearch } from "./image-search";
 
 export const SuspendedImageSearch = async ({ query }: { query?: string }) => {
-  const { images, error, total } = await getImages(query, 0, 100);
+  const { images, error, total } = await getImages(query, 0, 20);
 
   if (error) {
     return <ErrorComponent error={error} />;
