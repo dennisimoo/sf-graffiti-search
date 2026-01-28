@@ -19,8 +19,26 @@ export interface LocalImage {
   longitude?: number;
 }
 
-// In-memory cache - loaded once and reused across requests
+// In-memory cache - loaded on server startup
 let cachedImages: LocalImage[] | null = null;
+
+// Load cache on server startup
+function loadCache() {
+  try {
+    const dataPath = path.join(process.cwd(), "data", "processed-images.json");
+    if (fs.existsSync(dataPath)) {
+      console.log("Loading images into memory cache on startup...");
+      const start = Date.now();
+      cachedImages = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
+      console.log(`Cached ${cachedImages!.length} images in ${Date.now() - start}ms`);
+    }
+  } catch (error) {
+    console.error("Failed to load cache on startup:", error);
+  }
+}
+
+// Warm up cache immediately when module loads
+loadCache();
 
 // Convert LocalImage to DBImage format
 function toDBImage(img: LocalImage): DBImage {
@@ -42,9 +60,8 @@ export async function getImages(
   query?: string,
 ): Promise<{ images: DBImage[]; error?: Error }> {
   try {
-    const dataPath = path.join(process.cwd(), "data", "processed-images.json");
-
-    if (!fs.existsSync(dataPath)) {
+    // Use pre-loaded cache
+    if (!cachedImages) {
       return {
         images: [],
         error: new Error(
@@ -53,14 +70,7 @@ export async function getImages(
       };
     }
 
-    // Load from cache if available, otherwise read and cache
-    if (!cachedImages) {
-      console.log("Loading images into memory cache...");
-      cachedImages = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
-      console.log(`Cached ${cachedImages!.length} images`);
-    }
-
-    const images = cachedImages!;
+    const images = cachedImages;
 
     // If no query, return all images
     if (!query || query.length < 2) {
